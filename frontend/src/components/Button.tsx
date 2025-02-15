@@ -1,16 +1,19 @@
-import React from 'react'
-import UploadIcon from '../assets/icons/Upload'
+import {guardar} from '../utils/onSubmitImage'
 
 interface Props {
-  children: React.ReactNode,
-  background: "primary" | "secondary"
+  background: "primary" | "secondary",
+  setFiles: React.Dispatch<React.SetStateAction<File[]>>,
 }
 
-export default function Button({ children, background }: Props) {
+export default function Button({ background,setFiles }: Props) {
   return (
-    <button className={`bg-${background} p-4 text-white rounded-2xl flex gap-2 cursor-pointer transition duration-200 hover:bg-primary-light active:scale-90`}>
-      <UploadIcon color='white' /> 
-      <p>{children}</p>
-    </button>
+    <>
+      <input 
+          type='file' 
+          className={`bg-${background} p-3 text-white rounded-2xl flex gap-2 cursor-pointer transition duration-200 hover:bg-primary-light active:scale-90`} 
+          accept="image/*"
+          onChange={(event) => guardar({setFiles, event})}
+        />
+    </>
   )
 }
