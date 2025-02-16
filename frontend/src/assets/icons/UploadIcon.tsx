@@ -1,5 +1,5 @@
 interface Props {
-  color: "primary" | "white"
+  color: "primary" | "secondary" | "white"
 }
 
 export default function UploadIcon({ color }: Props) {

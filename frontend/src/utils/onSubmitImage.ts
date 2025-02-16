@@ -1,17 +1,10 @@
 import React from 'react';
+import { SetFile } from '../types/State';
 
 interface Props {
-    setFiles: React.Dispatch<React.SetStateAction<File[]>>,
+    setFiles: SetFile,
     event: React.ChangeEvent<HTMLInputElement>   
 }
-
-// export function guardar({ setFiles, event }: Props) {
-//     // si existen los files, iterar por los files
-//     const file = event.target.files?.[0];
-//     if (file) {
-//         // setFiles(file); este error da porque tienes que ir guardando los archivos en el bucle
-//     }
-// }
 
 export function guardar({ setFiles, event }: Props) {
     const files = event.target.files;
