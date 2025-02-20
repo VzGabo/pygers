@@ -1,6 +1,9 @@
-import SearchIcon from "../assets/icons/SearchIcon";
+
 import { SetFile } from "../types/State";
 import Button from "./Button";
+import SearchIcon from "../assets/icons/SearchIcon";
+import { Link } from 'react-router-dom';
+
 
 interface Props {
   files: File[],
@@ -51,7 +54,7 @@ export default function Images({ files, setFiles }: Props) {
           setFiles={setFiles}
         >
           <SearchIcon color="white" />
-          <p>Buscar sospechosos</p>
+          <Link to="/Grabacion">Buscar sospechosos</Link>
         </Button>
       </div>
     </>
