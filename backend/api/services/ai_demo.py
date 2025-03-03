@@ -100,3 +100,94 @@ class FaceRecognitionModel:
             img = img.rotate(90, expand=True)
         
         return img.resize(sizes, Image.LANCZOS)
+
+def main():
+    model = FaceRecognitionModel()
+    model.add_known_face(["abi3.png"])
+    
+    capture = cv2.VideoCapture(0)
+    capture.set(cv2.CAP_PROP_FRAME_WIDTH, 400)
+    capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 400)
+    capture.set(cv2.CAP_PROP_FPS, 15)
+    
+    frame_counter = 0
+    detection_interval = 5
+    
+    # Variables compartidas con protección de hilos
+    lock = threading.Lock()
+    latest_boxes = []
+    latest_matches = []
+    latest_similarities = []
+    processing_thread = None
+    
+    def process_image(image: Image.Image, original_size: Tuple[int, int]):
+        nonlocal latest_boxes, latest_matches, latest_similarities
+        matches, boxes, similarities = model.compare_face_with_known_faces(image)
+        
+        # Escalar las coordenadas de los bounding boxes al tamaño original
+        if boxes is not None and len(boxes) > 0:  # Verificar si hay boxes
+            scale_x = original_size[0] / image.size[0]
+            scale_y = original_size[1] / image.size[1]
+            boxes = boxes * np.array([scale_x, scale_y, scale_x, scale_y])
+        else:
+            boxes = None  # Asegurarnos de que boxes sea None si no hay detecciones
+        
+        with lock:
+            if boxes is not None and len(boxes) > 0:
+                latest_boxes[:] = boxes
+                latest_matches[:] = matches
+                latest_similarities[:] = similarities
+            else:
+                latest_boxes.clear()
+                latest_matches.clear()
+            latest_similarities.clear()
+    
+    while True:
+        ret, frame = capture.read()
+        if not ret:
+            break
+        
+        if cv2.waitKey(1) == ord('q'):
+            break
+        
+        # Convertir a PIL y manejar detección en hilo
+        pil_img = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+        
+        # Redimensionar la imagen para el procesamiento
+        processed_size = (400, 400)  # Tamaño al que se redimensiona la imagen en pre_process_image
+        resized_img = pil_img.resize(processed_size, Image.LANCZOS)
+        
+        # Iniciar procesamiento en hilo si está listo
+        if frame_counter % detection_interval == 0:
+            if processing_thread is None or not processing_thread.is_alive():
+                processing_thread = threading.Thread(
+                    target=process_image, 
+                    args=(resized_img, pil_img.size)  # Pasamos el tamaño original de la imagen
+                )
+                processing_thread.start()
+        
+        # Obtener copia segura de los datos
+        with lock:
+            current_boxes = list(latest_boxes)
+            current_matches = list(latest_matches)
+        
+        # Dibujar resultados
+        for i, box in enumerate(current_boxes):
+            box = box.astype(int)
+            cv2.rectangle(frame, (box[0], box[1]), (box[2], box[3]), (0, 255, 0), 2)
+            if i < len(current_matches):
+                name, distance = current_matches[i]
+                # Mostrar el nombre y la distancia (similitud) en el frame
+                text = f"{name}: {distance:.2f}"
+                cv2.putText(frame, text, (box[0], box[1] - 10), 
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+            
+                
+        cv2.imshow("Detección en Tiempo Real", frame)
+        frame_counter += 1
+    
+    capture.release()
+    cv2.destroyAllWindows()
+
+if __name__ == "__main__":
+    main()
