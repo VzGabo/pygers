@@ -54,7 +54,7 @@ export default function Images({ files, setFiles }: Props) {
           setFiles={setFiles}
         >
           <SearchIcon color="white" />
-          <Link to="/Grabacion">Buscar sospechosos</Link>
+          <Link to="/Opciones">Buscar sospechosos</Link>
         </Button>
       </div>
     </>
