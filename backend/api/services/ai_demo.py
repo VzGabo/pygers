@@ -35,22 +35,23 @@ class FaceRecognitionModel:
         embeddings = embeddings / embeddings.norm(p=2, dim=1, keepdim=True)
         return embeddings
 
-    def compare_face_with_known_faces(self, image: Image.Image) -> Tuple[List[Tuple[str, float]], List[np.ndarray]]:
+    def compare_face_with_known_faces(self, image: Image.Image) -> Tuple[List[Tuple[str, float]], List[np.ndarray], List[float]]:
         matches = []
         matched_boxes = []
+        distances = []
         
         if not self.known_face_embeddings:
-            return matches, matched_boxes
+            return matches, matched_boxes, distances
         
         processed_img = self.pre_process_image(image)
         
         boxes, probs, _ = self.mtcnn.detect(processed_img, landmarks=True)
         if boxes is None:
-            return matches, matched_boxes
+            return matches, matched_boxes, distances
         
         faces = self.mtcnn.extract(processed_img, boxes, save_path=None)
         if faces is None:
-            return matches, matched_boxes
+            return matches, matched_boxes, distances
 
         for i, face in enumerate(faces):
             face_embedding = self.get_embeddings(face.unsqueeze(0))
@@ -59,8 +60,13 @@ class FaceRecognitionModel:
                 if distance <= self.umbral:
                     matches.append((path, distance))
                     matched_boxes.append(boxes[i])
+                    distances.append(distance)
+                else:
+                    matches.append(("Desconocido", distance))
+                    matched_boxes.append(boxes[i])
+                    distances.append(distance)
         
-        return self.post_process_image(matches, matched_boxes)
+        return matches, matched_boxes, distances
 
     def add_known_face(self, faces_path: List[str]) -> None:
         for path in faces_path:
@@ -71,20 +77,6 @@ class FaceRecognitionModel:
                 face = faces[0].unsqueeze(0)
                 embedding = self.get_embeddings(face)
                 self.known_face_embeddings[path] = embedding
-
-    def scale_boxes(self, boxes: np.ndarray, original_size: Tuple[int, int], processed_size: Tuple[int, int]) -> np.ndarray:
-        scale_x = original_size[0] / processed_size[0]
-        scale_y = original_size[1] / processed_size[1]
-        return boxes * np.array([scale_x, scale_y, scale_x, scale_y])
-
-    def post_process_image(self, matches, matched_boxes):
-        for i in range(len(matches)):
-            img_path = matches[i][0]
-            img_original_size = Image.open(img_path).size
-            matched_boxes[i] = self.scale_boxes(matched_boxes[i], img_original_size, (400, 400))
-
-        return matches, matched_boxes
-
 
     def pre_process_image(self, image: Image.Image) -> Image.Image:
         sizes = (400, 400)
@@ -103,7 +95,7 @@ class FaceRecognitionModel:
 
 def main():
     model = FaceRecognitionModel()
-    model.add_known_face(["abi3.png"])
+    model.add_known_face(["pygers/backend/api/services/gabriel.png"])
     
     capture = cv2.VideoCapture(0)
     capture.set(cv2.CAP_PROP_FRAME_WIDTH, 400)
