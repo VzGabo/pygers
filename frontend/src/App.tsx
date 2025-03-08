@@ -1,31 +1,21 @@
-import { useState } from 'react'
-import Navbar from './components/Navbar'
-import Button from './components/Button'
-import Images from './components/Images'
+import Home from './pages/home'
+import { BrowserRouter, Routes, Route} from 'react-router-dom';
+import CompGrabacion from './pages/Grabacion';
+import Decision from './components/Decision';
+import WebcamComponent from './components/ActivarCamara'
+
 
 export default function App() {
-  const [files, setFiles] = useState<File[]>([])
   
   return (
-    <main>
-      <Navbar />
-      {
-          files.length === 0
-          ?
-          <Button 
-            element='file'
-            background='primary' 
-            setFiles={setFiles}
-          >
-            Sube tus sospechosos
-          </Button>
-          :
-          <Images 
-            files={files} 
-            setFiles={setFiles} 
-          />
-        }
-    </main>
+    <BrowserRouter>
+      <Routes>
+        <Route path='/' element={<Home/>}></Route>
+        <Route path="/Grabacion" element={<CompGrabacion />} />
+        <Route path="/Opciones" element={<Decision />} />
+        <Route path="/Live" element={<WebcamComponent />} />
+      </Routes>
+    </BrowserRouter>
   )
 }
 
