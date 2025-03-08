@@ -1,34 +1,54 @@
-// import { useRef, useEffect } from 'react';
+import React, { useRef } from 'react';
+import Webcam from 'react-webcam';
 
-// export default function Camara() {
-//   const videoRef = useRef(null);
+interface Props {}
 
-//   useEffect(() => {
-//     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-//       navigator.mediaDevices.getUserMedia({ video: true })
-//         .then(stream => {
-//           if (videoRef.current) {
-//             videoRef.current.srcObject = stream;
-//             videoRef.current.play();
-//           }
-//         })
-//         .catch(error => {
-//           console.error('Error al acceder a la cámara:', error);
-//         });
-//     }
-//   }, []);
-// }
+const WebcamComponent: React.FunctionComponent<Props> = () => {
+  const webcamRef = useRef<Webcam>(null);
 
+  const handlePause = () => {
+    if (webcamRef.current) {
+      webcamRef.current.video?.pause();
+    }
+  };
 
-import React from 'react';
+  const handleResume = () => {
+    if (webcamRef.current) {
+      webcamRef.current.video?.play();
+    }
+  };
 
-function Live() {
+  const handleStop = () => {
+    if (webcamRef.current) {
+      const video = webcamRef.current.video;
+      if (video) {
+        video.srcObject = null;
+      }
+    }
+  };
+
   return (
     <div>
-      <h1>Live</h1>
-      <p>Bienvenido a la página de Live</p>
+      <h1>Visualización de la Cámara</h1>
+      <Webcam
+        audio={false}
+        height={720}
+        ref={webcamRef}
+        screenshotFormat="image/jpeg"
+        width={1280}
+        videoConstraints={{
+          width: 1280,
+          height: 720,
+          facingMode: 'user',
+        }}
+      />
+      <div>
+        <button onClick={handlePause}>Pausar</button>
+        <button onClick={handleResume}>Reanudar</button>
+        <button onClick={handleStop}>Detener</button>
+      </div>
     </div>
   );
-}
+};
 
-export default Live
+export default WebcamComponent;
