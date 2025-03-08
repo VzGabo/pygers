@@ -8,6 +8,7 @@ import os
 from io import BytesIO
 from fastapi.responses import JSONResponse
 from api.services.ai import FaceRecognitionModel
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
@@ -16,15 +17,15 @@ app = FastAPI()
     a través de la clase Middleware
 '''
 
-# origin = {
-#     "http://localhost:3000"
-# }
+origins = ["*"]
 
-# Middleware(
-#     origin = origin,
-#     allow_headers = ["*"],
-#     allow_credentials = True
-# )
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 # Initialize the model
@@ -103,7 +104,6 @@ async def compare_faces(image: UploadFile = File(...)):
     image_bytes = await image.read()
 
     # Conocer el resultado 
-
     try: 
         image_pil = Image.open(BytesIO(image_bytes))
     except Exception as e: 

@@ -1,5 +1,4 @@
-import threading
-import cv2
+
 import torch
 from PIL import Image
 from typing import Dict, List, Tuple
@@ -53,16 +52,21 @@ class FaceRecognitionModel:
             return matches, matched_boxes
 
         for i, face in enumerate(faces):
+            print(i)
             face_embedding = self.get_embeddings(face.unsqueeze(0))
             for path, known_embedding in self.known_face_embeddings.items():
                 distance = euclidean(face_embedding.view(-1), known_embedding.view(-1))
+                print(f"{path} - {distance}")
+
                 if distance <= self.umbral:
                     matches.append((path, distance))
                     matched_boxes.append(boxes[i])
-        
         return self.post_process_image(matches, matched_boxes)
+    
 
     def add_known_face(self, faces_path: List[str]) -> None:
+        self.known_face_embeddings = {}
+
         for path in faces_path:
             img = Image.open(path)
             processed_img = self.pre_process_image(img)
