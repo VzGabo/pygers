@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import ReactPlayer from 'react-player';
 import InputVideo from './ButtonVideo';
-import Concidencias from './Coincidencias';
 
 export default function GestorVideo() {
   const [videoUrl, setVideoUrl] = useState<string>('');
@@ -18,7 +17,6 @@ export default function GestorVideo() {
           <ReactPlayer url={videoUrl} controls width="100%" height="auto" className="rounded-lg shadow-lg" />
         </div>
       )}
-    <Concidencias/>
     </div>
   );
 }

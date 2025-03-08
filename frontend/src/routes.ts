@@ -12,4 +12,4 @@ import {
         route("Grabacion", "./components/Grabacion.tsx"),
     ]),
   ] satisfies RouteConfig;
-  
+

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import Navbar from '../components/Navbar'
 import Button from '../components/Button'
-import Images from '../components/Images'
+import Image from '../components/Images'
 // import Live from './components/ActivarCamara';
 
 export default function Home() {
@@ -21,7 +21,7 @@ export default function Home() {
             Sube tus sospechosos
           </Button>
           :
-          <Images 
+          <Image 
             files={files} 
             setFiles={setFiles} 
           />

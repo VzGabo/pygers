@@ -95,7 +95,7 @@ class FaceRecognitionModel:
 
 def main():
     model = FaceRecognitionModel()
-    model.add_known_face(["pygers/backend/api/services/gabriel.png"])
+    model.add_known_face(["backend/api/images/joshua.jpeg", "backend/api/images/me_presentation.png"])
     
     capture = cv2.VideoCapture(0)
     capture.set(cv2.CAP_PROP_FRAME_WIDTH, 400)
