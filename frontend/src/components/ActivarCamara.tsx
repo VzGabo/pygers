@@ -10,29 +10,19 @@ export default function WebcamComponent() {
   }
 
   const [comparisonResult, setComparisonResult] = useState<ComparisonResult | null>(null);
-  const [imagePaths, setImagePaths] = useState<string[]>([]);
+  const [isCameraActive, setIsCameraActive] = useState(false);
+  const [isSearching, setIsSearching] = useState(true);
 
   useEffect(() => {
-    const interval = setInterval(captureFrame, 1000); // Cambia el intervalo según tus necesidades (en milisegundos)
-    return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    fetchImages();
-  }, []);
-
-  const fetchImages = async () => {
-    try {
-      const response = await fetch('http://localhost:8000/upload-faces');
-      const data = await response.json();
-      setImagePaths(data.path_images);
-    } catch (error) {
-      console.error('Error fetching images:', error);
+    let interval: NodeJS.Timeout;
+    if (isCameraActive && isSearching) {
+      interval = setInterval(captureFrame, 1000); // Cambia el intervalo según tus necesidades (en milisegundos)
     }
-  };
+    return () => clearInterval(interval);
+  }, [isCameraActive, isSearching]);
 
   const captureFrame = async () => {
-    if (webcamRef.current) {
+    if (webcamRef.current && isSearching) {
       const imageSrc = webcamRef.current.getScreenshot();
       if (imageSrc) {
         const blob = await fetch(imageSrc).then(res => res.blob());
@@ -48,8 +38,9 @@ export default function WebcamComponent() {
           });
           const result = await response.json();
           setComparisonResult(result);
-          if(result?.results) {
-            handleStop()
+          if (result?.results) {
+            handlePause(); // Pausar la cámara al encontrar una coincidencia
+            setIsSearching(false); // Detener las consultas al backend
           }
           console.log('Frame sent successfully:', result);
         } catch (error) {
@@ -60,6 +51,8 @@ export default function WebcamComponent() {
   };
 
   const handleStart = () => {
+    setIsCameraActive(true);
+    setIsSearching(true);
     if (webcamRef.current) {
       const video = webcamRef.current.video;
       if (video) {
@@ -76,18 +69,22 @@ export default function WebcamComponent() {
   };
 
   const handlePause = () => {
+    setIsCameraActive(false);
     if (webcamRef.current) {
       webcamRef.current.video?.pause();
     }
   };
 
   const handleResume = () => {
+    setIsCameraActive(true);
     if (webcamRef.current) {
       webcamRef.current.video?.play();
     }
   };
 
   const handleStop = () => {
+    setIsCameraActive(false);
+    setIsSearching(false);
     if (webcamRef.current) {
       const video = webcamRef.current.video;
       if (video) {
@@ -147,27 +144,25 @@ export default function WebcamComponent() {
             </div>
           </div>
           {/* Mostrar resultados de comparación */}
-          {comparisonResult && (
-            <div className="flex flex-col items-center">
-              <p className="text-white font-bold text-center text-2xl w-[60%]">
-                {comparisonResult.message}
-              </p>
-              {comparisonResult.results && comparisonResult.results.length > 0 && (
-                <div className="flex flex-col items-center">
-                  <img
-                    src={`http://localhost:8000/${comparisonResult.results[0].known_face_path.replace(/\\/g, '/')}`}
-                    alt="Known face"
-                    className="mt-4 border-4 border-orange-500"
-                    width={200}
-                    height={200}
-                  />
-                  <p className="text-white mt-2 text-center">
-                    Porcentaje de aproximación: {((1 - comparisonResult.results[0].distance) * 100).toFixed(2)}%
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
+          <div className="flex flex-col items-center">
+            <p className="text-white font-bold text-center text-2xl w-[60%]">
+              {comparisonResult ? comparisonResult.message : "Esperando resultados de comparación..."}
+            </p>
+            {comparisonResult && comparisonResult.results && comparisonResult.results.length > 0 && (
+              <div className="flex flex-col items-center">
+                <img
+                  src={`http://localhost:8000/faces/${comparisonResult.results[0].known_face_path.split('\\').pop()}`}
+                  alt="Known face"
+                  className="mt-4 border-4 border-orange-500"
+                  width={200}
+                  height={200}
+                />
+                <p className="text-white mt-2 text-center">
+                  Porcentaje de aproximación: {((1 - comparisonResult.results[0].distance) * 100).toFixed(2)}%
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </>
