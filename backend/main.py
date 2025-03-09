@@ -60,12 +60,19 @@ def root():
 
 @app.get("/upload-faces")
 async def get_images():
-
     if not os.listdir("api/images/"):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail = "There is not images")
     return {"path_images" : os.listdir("api/images/")}
     
+@app.get("/faces/{name}")
+async def download_image(name):
+    file_path = os.path.join(UPLOAD_FOLDER, name)
+    print(file_path)
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image not found")
+    return FileResponse(file_path)
+
 
 @app.post("/upload-faces")
 async def upload_image(files: List[UploadFile] = File(...)):
