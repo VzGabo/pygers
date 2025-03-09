@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #115194;
+  --color-primary-light: #4488D0;
+  --color-primary-dark: #1c2e49;
+  --color-secondary: #c68107;
+  --color-secondary-light: #efa72b;
+}
+
+:root {
+  background-color: var(--color-primary-dark);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
