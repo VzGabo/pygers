@@ -10,16 +10,17 @@ interface Props {
   iconColor?: "white" | "primary" | "secondary",
   type?: "fulled" | "outline",
   onChange?: () => void
+  onClick?: () => void
 }
 
 export default function Button({ 
   background, 
   element, 
   children, 
-  setFiles, 
   type = "fulled", 
   iconColor = "white", 
-  onChange, 
+  setFiles, 
+  onClick, 
 }: Props) {
   if(element === "file") {
     return (
@@ -45,7 +46,7 @@ export default function Button({
     return (
       <button  
         className={`${type === "fulled" ? `bg-${background} text-white hover:bg-${background}-light` : `bg-white border-${background} border-2 text-${background} hover:brightness-110 hover:border-${background}-light`} p-3 w-fit m-auto mt-10 rounded-2xl flex justify-center text-left max-h-16 items-center gap-3 cursor-pointer transition duration-200 active:scale-90`}
-        onChange={onChange}
+        onClick={onClick}
       >
         { children }
       </button>

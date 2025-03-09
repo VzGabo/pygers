@@ -13,7 +13,6 @@ export function guardar({ setFiles, event }: Props) {
         for (let i = 0; i < files?.length; i++) {
             const file = files[i];
             setFiles(prevFiles => [...prevFiles, file]);
-            console.log(file);
         }
     }
 }

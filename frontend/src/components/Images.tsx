@@ -59,10 +59,10 @@
 //     </>
 //   )
 // }
-import React, { useState } from 'react';
+import React from 'react';
 import Button from './Button';
 import SearchIcon from '../assets/icons/SearchIcon';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { SetFile } from "../types/State";
 
 interface Props {
@@ -78,6 +78,9 @@ interface Props {
 }
 
 const Images: React.FC<Props> = ({ files, setFiles }) => {
+
+  const navigate = useNavigate()
+
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newFiles = Array.from(event.target.files || []);
     setFiles(prevFiles => [...prevFiles, ...newFiles]);
@@ -88,6 +91,7 @@ const Images: React.FC<Props> = ({ files, setFiles }) => {
   };
 
   const handleUploadImages = async () => {
+    console.log(files);
     if (files.length > 0) {
       const formData = new FormData();
       files.forEach(file => {
@@ -101,6 +105,7 @@ const Images: React.FC<Props> = ({ files, setFiles }) => {
         });
         const result = await response.json();
         console.log('Upload result:', result);
+        navigate("/Opciones")
       } catch (error) {
         console.error('Error uploading files to backend:', error);
       }
@@ -111,7 +116,7 @@ const Images: React.FC<Props> = ({ files, setFiles }) => {
 
   return (
     <>
-      <div id="file" className="relative flex justify-center items-center m-10 mb-3">
+      <div id="file" className="relative flex justify-center items-center m-10 mb-3 flex-wrap">
         {files.map((file, index) => (
           <div key={index} className="relative">
             <img
@@ -153,10 +158,11 @@ const Images: React.FC<Props> = ({ files, setFiles }) => {
         <Button
           element="button"
           background="primary"
+          setFiles={setFiles}
           onClick={handleUploadImages}
         >
           <SearchIcon color="white" />
-          <Link to="/Opciones">Buscar sospechosos</Link>
+          Buscar sospechosos
         </Button>
       </div>
     </>
