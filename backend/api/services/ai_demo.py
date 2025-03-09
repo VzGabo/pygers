@@ -94,82 +94,6 @@ class FaceRecognitionModel:
         
         return img.resize(sizes, Image.LANCZOS)
 
-<<<<<<< HEAD
-class App:
-    def __init__(self, window, window_title, model):
-        self.window = window
-        self.window.title(window_title)
-        self.model = model
-        self.capture = None
-        self.is_running = False
-        self.frame_counter = 0
-        self.detection_interval = 5
-        self.lock = threading.Lock()
-        self.latest_boxes = []
-        self.latest_matches = []
-        self.latest_similarities = []
-        self.processing_thread = None
-
-        # UI elements
-        self.canvas_width = 800
-        self.canvas_height = 600
-        self.canvas = tk.Canvas(window, width=self.canvas_width, height=self.canvas_height)
-        self.canvas.pack()
-
-        self.btn_load_image = tk.Button(window, text="Load Image", width=20, command=self.load_image)
-        self.btn_load_image.pack(pady=5)
-
-        self.btn_start = tk.Button(window, text="Start Camera", width=20, command=self.start_camera)
-        self.btn_start.pack(pady=5)
-
-        self.btn_stop = tk.Button(window, text="Stop Camera", width=20, command=self.stop_camera, state=tk.DISABLED)
-        self.btn_stop.pack(pady=5)
-
-        self.delay = 15  # ms
-        self.window.mainloop()
-
-    def load_image(self):
-        filename = filedialog.askopenfilename(initialdir=".", title="Select an image",
-                                              filetypes=(("PNG files", "*.png"), ("JPEG files", "*.jpg;*.jpeg"), ("All files", "*.*")))
-        if filename:
-            self.model.add_known_face([filename])
-            print(f"Loaded image: {filename}")
-
-    def start_camera(self):
-        self.capture = cv2.VideoCapture(0)
-        if not self.capture.isOpened():
-            print("Error: Could not open video device.")
-            return
-        # Aumentar la resolución de la cámara
-        self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-        self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
-        self.is_running = True
-        self.btn_start.config(state=tk.DISABLED)
-        self.btn_stop.config(state=tk.NORMAL)
-        self.update()
-
-    def stop_camera(self):
-        self.is_running = False
-        self.btn_start.config(state=tk.NORMAL)
-        self.btn_stop.config(state=tk.DISABLED)
-        if self.capture:
-            self.capture.release()
-
-    def process_image(self, image: Image.Image):
-        matches, boxes, similarities = self.model.compare_face_with_known_faces(image)
-        with self.lock:
-            self.latest_boxes[:] = boxes if boxes is not None else []
-            self.latest_matches[:] = matches if matches is not None else []
-            self.latest_similarities[:] = similarities if similarities is not None else []
-
-    def update(self):
-        if self.is_running:
-            ret, frame = self.capture.read()
-            if ret:
-                # Convertir el frame a PIL.Image y aplicar preprocesamiento
-                pil_img = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
-                processed_img = self.model.pre_process_image(pil_img)
-=======
 def main():
     model = FaceRecognitionModel()
     model.add_known_face(["backend/api/images/joshua.jpeg", "backend/api/images/me_presentation.png"])
@@ -251,7 +175,6 @@ def main():
                 cv2.putText(frame, text, (box[0], box[1] - 10), 
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
             
->>>>>>> 7e6674e1d7895f289e933a6f6616769fa54c026f
                 
                 
                 # Procesamiento en hilo cada 'detection_interval' frames
