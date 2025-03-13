@@ -8,6 +8,8 @@ import os
 from io import BytesIO
 from fastapi.responses import JSONResponse
 from api.services.ai import FaceRecognitionModel
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 
 app = FastAPI()
 
@@ -16,16 +18,18 @@ app = FastAPI()
     a través de la clase Middleware
 '''
 
-# origin = {
-#     "http://localhost:3000"
-# }
+origins = ["http://localhost:5173"]
 
-# Middleware(
-#     origin = origin,
-#     allow_headers = ["*"],
-#     allow_credentials = True
-# )
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
+class ImageData(BaseModel):
+    image: str
 
 # Initialize the model
 face_model = FaceRecognitionModel()
@@ -33,10 +37,6 @@ oauth2 = OAuth2PasswordBearer(tokenUrl = "comparate")
 
 UPLOAD_FOLDER = 'api/images'
 os.makedirs(UPLOAD_FOLDER, exist_ok = True)
-
-# async def exist_images() -> bool:
-#     os.listdir()
-
 
 '''
     FUNCTIONS WE'LL USE TO WORK IN THE COMPARATION
@@ -58,17 +58,24 @@ async def validate_image(image: UploadFile):
 def root():
     return {"message": "Hola World"}
 
-@app.get("/uploaded-faces")
+@app.get("/upload-faces")
 async def get_images():
-
     if not os.listdir("api/images/"):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail = "There is not images")
     return {"path_images" : os.listdir("api/images/")}
     
+@app.get("/faces/{name}")
+async def download_image(name):
+    file_path = os.path.join(UPLOAD_FOLDER, name)
+    print(file_path)
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image not found")
+    return FileResponse(file_path)
+
 
 @app.post("/upload-faces")
-async def upload_image(images: List[UploadFile] = File(...)):
+async def upload_image(files: List[UploadFile] = File(...)):
     try:
         # Clear existing images
         for filename in os.listdir(UPLOAD_FOLDER):
@@ -78,7 +85,7 @@ async def upload_image(images: List[UploadFile] = File(...)):
 
         list_path = []
         # Save new images
-        for image in images:
+        for image in files:
             file_path = os.path.join(UPLOAD_FOLDER, image.filename)
             image_data = await image.read()
             with open(file_path, "wb") as image_file:
@@ -94,16 +101,15 @@ async def upload_image(images: List[UploadFile] = File(...)):
         return JSONResponse(content={"error": str(e)}, status_code = 500)
 
 @app.post("/compare-faces")
-async def compare_faces(image: UploadFile = File(...)):
+async def compare_faces(file: UploadFile = File(...)):
 
     # Validar imagen
-    if not image.filename.lower().endswith(('.jpg', '.png', 'jpeg')):
+    if not file.filename.lower().endswith(('.jpg', '.png', 'jpeg')):
         raise HTTPException(status_code = status.HTTP_400_BAD_REQUEST,
                             detail = "Image format don't accept")
-    image_bytes = await image.read()
+    image_bytes = await file.read()
 
     # Conocer el resultado 
-
     try: 
         image_pil = Image.open(BytesIO(image_bytes))
     except Exception as e: 
@@ -127,6 +133,3 @@ async def compare_faces(image: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/testing")
-async def test():
-    return {"test" : "testeasndo"}

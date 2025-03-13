@@ -1,17 +1,18 @@
-import threading
+import tkinter as tk
+from tkinter import filedialog
+from PIL import Image, ImageTk, ImageDraw
 import cv2
+import threading
 import torch
-from PIL import Image
-from typing import Dict, List, Tuple
 import numpy as np
-from io import BytesIO
+from typing import Dict, List, Tuple
 from facenet_pytorch import MTCNN, InceptionResnetV1
 from scipy.spatial.distance import euclidean
 
 class FaceRecognitionModel:
     def __init__(self):
         self.known_face_embeddings: Dict[str, torch.Tensor] = {}
-        self.umbral: float = 0.36
+        self.umbral: float = 0.45
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
         
         self.mtcnn = MTCNN(
@@ -55,16 +56,16 @@ class FaceRecognitionModel:
 
         for i, face in enumerate(faces):
             face_embedding = self.get_embeddings(face.unsqueeze(0))
+            min_distance = float('inf')
+            match_name = "Desconocido"
             for path, known_embedding in self.known_face_embeddings.items():
                 distance = euclidean(face_embedding.view(-1), known_embedding.view(-1))
-                if distance <= self.umbral:
-                    matches.append((path, distance))
-                    matched_boxes.append(boxes[i])
-                    distances.append(distance)
-                else:
-                    matches.append(("Desconocido", distance))
-                    matched_boxes.append(boxes[i])
-                    distances.append(distance)
+                if distance < min_distance:
+                    min_distance = distance
+                    match_name = path if distance <= self.umbral else "Desconocido"
+            matches.append((match_name, min_distance))
+            matched_boxes.append(boxes[i])
+            distances.append(min_distance)
         
         return matches, matched_boxes, distances
 
@@ -79,7 +80,7 @@ class FaceRecognitionModel:
                 self.known_face_embeddings[path] = embedding
 
     def pre_process_image(self, image: Image.Image) -> Image.Image:
-        sizes = (400, 400)
+        sizes = (800, 600)
         img = image.convert("RGB")
         exif = img.getexif()
         orientation = exif.get(274, 1)
@@ -95,7 +96,7 @@ class FaceRecognitionModel:
 
 def main():
     model = FaceRecognitionModel()
-    model.add_known_face(["pygers/backend/api/services/gabriel.png"])
+    model.add_known_face(["backend/api/images/joshua.jpeg", "backend/api/images/me_presentation.png"])
     
     capture = cv2.VideoCapture(0)
     capture.set(cv2.CAP_PROP_FRAME_WIDTH, 400)
@@ -175,11 +176,38 @@ def main():
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
             
                 
-        cv2.imshow("Detección en Tiempo Real", frame)
-        frame_counter += 1
-    
-    capture.release()
-    cv2.destroyAllWindows()
+                
+                # Procesamiento en hilo cada 'detection_interval' frames
+                if self.frame_counter % self.detection_interval == 0:
+                    if self.processing_thread is None or not self.processing_thread.is_alive():
+                        self.processing_thread = threading.Thread(
+                            target=self.process_image, 
+                            args=(processed_img,)
+                        )
+                        self.processing_thread.start()
+                
+                # Dibujar bounding boxes y texto en la imagen procesada
+                draw = ImageDraw.Draw(processed_img)
+                with self.lock:
+                    current_boxes = list(self.latest_boxes)
+                    current_matches = list(self.latest_matches)
+                
+                for i, box in enumerate(current_boxes):
+                    box = box.astype(int)
+                    draw.rectangle([box[0], box[1], box[2], box[3]], outline="green", width=2)
+                    if i < len(current_matches):
+                        name, distance = current_matches[i]
+                        text = f"{name.split('/')[-1]}: {distance:.2f}"
+                        draw.text((box[0], box[1] - 10), text, fill="green")
+                
+                # Mostrar la imagen procesada en el canvas
+                self.photo = ImageTk.PhotoImage(image=processed_img)
+                self.canvas.create_image(0, 0, image=self.photo, anchor=tk.NW)
+                self.canvas.image = self.photo
+                self.frame_counter += 1
+            self.window.after(self.delay, self.update)
 
 if __name__ == "__main__":
-    main()
+    model = FaceRecognitionModel()
+    root = tk.Tk()
+    app = App(root, "Face Recognition App", model)
